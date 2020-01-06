@@ -3,6 +3,7 @@ package pinger
 import (
 	"log"
 	"math"
+	"sync"
 	"time"
 )
 
@@ -26,19 +27,25 @@ func newStat() stat {
 type stat struct {
 	PingSessionStat
 
+	mtx    sync.Mutex
 	pings  map[int]time.Time
 	durSum time.Duration
 }
 
 func (s *stat) Send(id int) {
 	log.Printf("Send(%v)", id)
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+
 	s.Sent++
 	s.pings[id] = time.Now()
-
 }
 
 func (s *stat) Receive(id int) {
 	log.Printf("Receive(%v)", id)
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+
 	s.Received++
 	if sent, ok := s.pings[id]; ok {
 		dur := time.Now().Sub(sent)
@@ -53,6 +60,9 @@ func (s *stat) Receive(id int) {
 }
 
 func (s *stat) Stat() *PingSessionStat {
+	log.Print("Stat()")
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
 	if s.Received > 0 {
 		s.AvgTime = s.durSum / time.Duration(s.Received)
 	}
