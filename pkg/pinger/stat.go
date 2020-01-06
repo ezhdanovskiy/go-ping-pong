@@ -53,6 +53,8 @@ func (s *stat) Receive(id int) {
 }
 
 func (s *stat) Stat() *PingSessionStat {
-	s.AvgTime = s.durSum / time.Duration(s.Received)
+	if s.Received > 0 {
+		s.AvgTime = s.durSum / time.Duration(s.Received)
+	}
 	return &s.PingSessionStat
 }

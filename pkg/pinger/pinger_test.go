@@ -41,12 +41,12 @@ func TestPinger_ThreePings(t *testing.T) {
 func TestPinger_Cancel(t *testing.T) {
 	p := Pinger{
 		PingSession: &pingSessionMock{ch: make(chan int, 1)},
-		Wait:        100 * time.Millisecond,
+		Wait:        200 * time.Millisecond,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(150 * time.Millisecond)
 		cancel()
 	}()
 
