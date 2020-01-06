@@ -31,8 +31,8 @@ jobs:
             dep ensure
         fi
 
-    - name: Build
-      run: go build -v .
+#    - name: Build
+#      run: go build -v .
 
     - name: Test
       run: go test -race -coverprofile=coverage.txt -covermode=atomic -v
