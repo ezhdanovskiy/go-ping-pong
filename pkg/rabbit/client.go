@@ -50,7 +50,7 @@ func (c *AmqpClient) publish(id int, queueName string) error {
 		},
 	)
 	if err != nil {
-		return errors.Wrapf(err, "failed to publish event #+v", event)
+		return errors.Wrapf(err, "failed to publish event %+v", event)
 	}
 
 	return nil
