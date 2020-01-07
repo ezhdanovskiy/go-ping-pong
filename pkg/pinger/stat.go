@@ -8,18 +8,20 @@ import (
 )
 
 type PingSessionStat struct {
-	Sent     int
-	Received int
-	MinTime  time.Duration
-	AvgTime  time.Duration
-	MaxTime  time.Duration
+	Sent           int
+	Received       int
+	ReceivedInTime int
+	MinTime        time.Duration
+	AvgTime        time.Duration
+	MaxTime        time.Duration
 }
 
-func newStat() stat {
+func newStat(wait time.Duration) stat {
 	return stat{
 		PingSessionStat: PingSessionStat{
 			MinTime: time.Duration(math.MaxInt64),
 		},
+		wait:  wait,
 		pings: make(map[int]time.Time),
 	}
 }
@@ -27,8 +29,11 @@ func newStat() stat {
 type stat struct {
 	PingSessionStat
 
-	mtx    sync.Mutex
-	pings  map[int]time.Time
+	wait time.Duration
+
+	mtx   sync.Mutex
+	pings map[int]time.Time
+
 	durSum time.Duration
 }
 
@@ -47,16 +52,25 @@ func (s *stat) Receive(id int) {
 	defer s.mtx.Unlock()
 
 	s.Received++
-	if sent, ok := s.pings[id]; ok {
-		dur := time.Now().Sub(sent)
-		if s.MinTime > dur {
-			s.MinTime = dur
-		}
-		if s.MaxTime < dur {
-			s.MaxTime = dur
-		}
-		s.durSum += dur
+
+	sent, ok := s.pings[id]
+	if !ok {
+		return
 	}
+
+	dur := time.Now().Sub(sent)
+	if dur > s.wait {
+		return
+	}
+
+	s.ReceivedInTime++
+	if s.MinTime > dur {
+		s.MinTime = dur
+	}
+	if s.MaxTime < dur {
+		s.MaxTime = dur
+	}
+	s.durSum += dur
 }
 
 func (s *stat) Stat() *PingSessionStat {

@@ -23,11 +23,13 @@ func (p *Pinger) Run(ctx context.Context, n int) (*PingSessionStat, error) {
 	if n < 0 {
 		n = math.MaxInt32
 	}
-	if p.Wait == 0 {
-		p.Wait = time.Second
+
+	wait := p.Wait
+	if wait == 0 {
+		wait = time.Second
 	}
 
-	stat := newStat()
+	stat := newStat(wait)
 
 	pongDone := make(chan error, 1)
 	go func() {
@@ -63,7 +65,7 @@ func (p *Pinger) Run(ctx context.Context, n int) (*PingSessionStat, error) {
 			return stat.Stat(), errors.Wrap(ctx.Err(), "ping shutdown")
 		case err = <-pongDone:
 			return stat.Stat(), err
-		case <-time.After(p.Wait):
+		case <-time.After(wait):
 			continue
 		}
 	}
