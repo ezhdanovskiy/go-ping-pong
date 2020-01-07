@@ -35,9 +35,9 @@ func (s *pingSessionWithRandomSleepMock) Pongs() (<-chan int, error) {
 }
 
 func TestPinger_OnePingInTime(t *testing.T) {
-	p := Pinger{
-		PingSession: &pingSessionWithRandomSleepMock{ch: make(chan int)},
-		Wait:        200 * time.Millisecond,
+	p := Service{
+		Broker: &pingSessionWithRandomSleepMock{ch: make(chan int)},
+		Wait:   200 * time.Millisecond,
 	}
 
 	stat, err := p.Run(context.Background(), 1)
@@ -49,8 +49,8 @@ func TestPinger_OnePingInTime(t *testing.T) {
 }
 
 func TestPinger_OneLatePing(t *testing.T) {
-	p := Pinger{
-		PingSession: &pingSessionWithRandomSleepMock{
+	p := Service{
+		Broker: &pingSessionWithRandomSleepMock{
 			ch:     make(chan int),
 			minDur: 200 * time.Millisecond,
 		},
@@ -66,9 +66,9 @@ func TestPinger_OneLatePing(t *testing.T) {
 }
 
 func TestPinger_ThreePings(t *testing.T) {
-	p := Pinger{
-		PingSession: &pingSessionWithRandomSleepMock{ch: make(chan int)},
-		Wait:        200 * time.Millisecond,
+	p := Service{
+		Broker: &pingSessionWithRandomSleepMock{ch: make(chan int)},
+		Wait:   200 * time.Millisecond,
 	}
 
 	stat, err := p.Run(context.Background(), 3)
@@ -79,9 +79,9 @@ func TestPinger_ThreePings(t *testing.T) {
 }
 
 func TestPinger_Cancel(t *testing.T) {
-	p := Pinger{
-		PingSession: &pingSessionWithRandomSleepMock{ch: make(chan int, 1)},
-		Wait:        200 * time.Millisecond,
+	p := Service{
+		Broker: &pingSessionWithRandomSleepMock{ch: make(chan int, 1)},
+		Wait:   200 * time.Millisecond,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

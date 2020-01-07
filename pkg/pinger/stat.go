@@ -38,7 +38,7 @@ type stat struct {
 }
 
 func (s *stat) Send(id int) {
-	log.Printf("Send(%v)", id)
+	log.Printf("send %v", id)
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -47,7 +47,7 @@ func (s *stat) Send(id int) {
 }
 
 func (s *stat) Receive(id int) {
-	log.Printf("Receive(%v)", id)
+	log.Printf("receive %v", id)
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -74,7 +74,7 @@ func (s *stat) Receive(id int) {
 }
 
 func (s *stat) Stat() *PingSessionStat {
-	log.Print("Stat()")
+	log.Print("calculate stat")
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 	if s.Received > 0 {

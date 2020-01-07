@@ -31,8 +31,8 @@ jobs:
             dep ensure
         fi
 
-#    - name: Build
-#      run: go build -v .
+    - name: Build
+      run: go build -v github.com/ezhdanovskiy/go-ping-pong/cmd/ping && go build -v github.com/ezhdanovskiy/go-ping-pong/cmd/pong
 
     - name: Test
       run: go test -race -coverprofile=coverage.txt -covermode=atomic -v ./...
