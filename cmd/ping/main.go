@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -15,10 +16,27 @@ import (
 
 func main() {
 	var n = flag.Int("n", 0, "count of pings")
+	var transport = flag.String("t", "rabbit", "transport for pings")
 	flag.Parse()
 
-	url := "amqp://guest:guest@localhost:5672"
-	//url := fmt.Sprintf("amqp://%s:%s@%s", os.Getenv("AMQP_URL"), os.Getenv("AMQP_USER"), os.Getenv("AMQP_PASS"))
+	var broker pinger.Broker
+	switch *transport {
+	case "rabbit":
+		//url := fmt.Sprintf("amqp://%s:%s@%s", os.Getenv("AMQP_URL"), os.Getenv("AMQP_USER"), os.Getenv("AMQP_PASS"))
+		client, err := rabbit.NewClient("amqp://guest:guest@localhost:5672")
+		if err != nil {
+			log.Fatalf("Failed to create AMQP client: %s", err)
+		}
+		defer client.Close()
+		broker = client
+	default:
+		fmt.Printf("Unknown transport: %s\n", *transport)
+		return
+	}
+
+	srv := pinger.Service{
+		Broker: broker,
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
@@ -28,16 +46,6 @@ func main() {
 		log.Print("interrupt signal")
 		cancel()
 	}()
-
-	client, err := rabbit.NewClient(url)
-	if err != nil {
-		log.Fatalf("Failed to create AMQP client: %s", err)
-	}
-	defer client.Close()
-
-	srv := pinger.Service{
-		Broker: client,
-	}
 
 	stat, err := srv.Run(ctx, *n)
 	if err != nil && errors.Cause(err) != context.Canceled {
