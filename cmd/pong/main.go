@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/ezhdanovskiy/go-ping-pong/pkg/ponger"
 	"github.com/ezhdanovskiy/go-ping-pong/pkg/rabbit"
+	"github.com/ezhdanovskiy/go-ping-pong/pkg/tcp"
 	"github.com/pkg/errors"
 )
 
@@ -18,26 +18,33 @@ func main() {
 	var transport = flag.String("t", "rabbit", "transport for pings")
 	flag.Parse()
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	var broker ponger.Broker
+	var err error
 	switch *transport {
 	case "rabbit":
 		//url := fmt.Sprintf("amqp://%s:%s@%s", os.Getenv("AMQP_URL"), os.Getenv("AMQP_USER"), os.Getenv("AMQP_PASS"))
-		client, err := rabbit.NewClient("amqp://guest:guest@localhost:5672")
+		broker, err = rabbit.NewClient("amqp://guest:guest@localhost:5672")
 		if err != nil {
 			log.Fatalf("Failed to create AMQP client: %s", err)
 		}
-		defer client.Close()
-		broker = client
+
+	case "tcp":
+		broker, err = tcp.NewPonger(ctx, ":3333", ":3334")
+		if err != nil {
+			log.Fatalf("Failed to create tcp client: %s", err)
+		}
+
 	default:
-		fmt.Printf("Unknown transport: %s\n", *transport)
-		return
+		log.Fatalf("Unknown transport: %s", *transport)
 	}
+	defer broker.Close()
 
 	srv := ponger.Service{
 		Broker: broker,
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		stop := make(chan os.Signal, 1)
 		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)

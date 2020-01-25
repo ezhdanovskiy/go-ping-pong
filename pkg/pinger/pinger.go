@@ -12,6 +12,7 @@ import (
 type Broker interface {
 	Ping(id int) error
 	Pongs() (<-chan int, error)
+	Close() error
 }
 
 type Service struct {

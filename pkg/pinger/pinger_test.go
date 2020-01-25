@@ -34,6 +34,10 @@ func (s *pingSessionWithRandomSleepMock) Pongs() (<-chan int, error) {
 	return s.ch, nil
 }
 
+func (s *pingSessionWithRandomSleepMock) Close() error {
+	return nil
+}
+
 func TestPinger_OnePingInTime(t *testing.T) {
 	p := Service{
 		Broker: &pingSessionWithRandomSleepMock{ch: make(chan int)},

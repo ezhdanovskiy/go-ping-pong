@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/ezhdanovskiy/go-ping-pong/pkg/models"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 )
@@ -33,7 +34,7 @@ func (c *AmqpClient) Pong(id int) error {
 }
 
 func (c *AmqpClient) publish(id int, queueName string) error {
-	event := Event{ID: id}
+	event := models.Event{ID: id}
 	body, err := json.Marshal(&event)
 	if err != nil {
 		return errors.Wrapf(err, "failed to marshal event %+v", event)
@@ -76,12 +77,12 @@ func (c *AmqpClient) Pings() (<-chan int, error) {
 	go func() {
 		for msg := range msgs {
 			log.Printf("received: %s", msg.Body)
-			var ev Event
-			err := json.Unmarshal(msg.Body, &ev)
+			var event models.Event
+			err := json.Unmarshal(msg.Body, &event)
 			if err != nil {
 				log.Printf("Failed to unmarshal event: %s", msg.Body)
 			}
-			chIDs <- ev.ID
+			chIDs <- event.ID
 		}
 		log.Printf("stop consuming %s", DefaultPingsQueueName)
 	}()
@@ -108,13 +109,12 @@ func (c *AmqpClient) Pongs() (<-chan int, error) {
 
 	go func() {
 		for msg := range msgs {
-			log.Printf("received: %s", msg.Body)
-			var ev Event
-			err := json.Unmarshal(msg.Body, &ev)
+			var event models.Event
+			err := json.Unmarshal(msg.Body, &event)
 			if err != nil {
 				log.Printf("Failed to unmarshal event: %s", msg.Body)
 			}
-			chIDs <- ev.ID
+			chIDs <- event.ID
 		}
 		log.Printf("stop consuming %s", DefaultPongsQueueName)
 	}()

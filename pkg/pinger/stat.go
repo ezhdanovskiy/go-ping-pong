@@ -74,7 +74,6 @@ func (s *stat) Receive(id int) {
 }
 
 func (s *stat) Stat() *PingSessionStat {
-	log.Print("calculate stat")
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 	if s.Received > 0 {

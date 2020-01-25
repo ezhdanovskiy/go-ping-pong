@@ -10,6 +10,7 @@ import (
 type Broker interface {
 	Pings() (<-chan int, error)
 	Pong(id int) error
+	Close() error
 }
 
 type Service struct {
@@ -30,7 +31,7 @@ func (s *Service) Run(ctx context.Context) (n int, err error) {
 		case pingID := <-pings:
 			err := s.Broker.Pong(pingID)
 			if err != nil {
-				log.Printf("Failed to send ping %v: %s", pingID, err)
+				log.Printf("Failed to send pong %v: %s", pingID, err)
 				break
 			}
 			n++
