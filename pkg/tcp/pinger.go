@@ -3,6 +3,7 @@ package tcp
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -72,7 +73,10 @@ func (p *pinger) Pongs() (<-chan int, error) {
 					// Read the incoming connection into the buffer.
 					n, err := conn.Read(buf)
 					if err != nil {
-						log.Println("Error reading pongs:", err.Error())
+						if err != io.EOF {
+							log.Printf("Error reading pongs: %s", err)
+						}
+						break
 					}
 
 					var event models.Event

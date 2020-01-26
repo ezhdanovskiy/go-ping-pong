@@ -17,6 +17,7 @@ func NewPonger(ctx context.Context, pingAddr, pongAddr string) (*ponger, error) 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to start listening")
 	}
+	log.Printf("listen %v", pingAddr)
 	return &ponger{
 		ctx:          ctx,
 		pingListener: listener,

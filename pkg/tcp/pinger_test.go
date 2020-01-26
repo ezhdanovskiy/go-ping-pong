@@ -3,6 +3,7 @@ package tcp
 import (
 	"context"
 	"net"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,9 +17,10 @@ const (
 )
 
 func TestPinger_Pongs(t *testing.T) {
-	runPongerMock(t)
-
 	ctx, cancel := context.WithCancel(context.Background())
+
+	var wg sync.WaitGroup
+	runPongerMock(ctx, &wg, t)
 
 	p, err := NewPinger(ctx, pingAddr, pongAddr)
 	require.NoError(t, err)
@@ -40,33 +42,38 @@ func TestPinger_Pongs(t *testing.T) {
 	assert.Equal(t, pingID+1, id)
 
 	cancel()
+	wg.Wait()
 }
 
-func runPongerMock(t *testing.T) {
-	listener, err := net.Listen("tcp", pingAddr)
+func runPongerMock(ctx context.Context, wg *sync.WaitGroup, t *testing.T) {
+	listenConfig := &net.ListenConfig{}
+	listener, err := listenConfig.Listen(ctx, "tcp", pingAddr)
 	require.NoError(t, err)
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		defer listener.Close()
 
 		conn, err := listener.Accept()
 		require.NoError(t, err)
-		defer conn.Close()
 
 		var pongConn net.Conn
 		buf := make([]byte, 1024)
-		for {
+		for i := 0; i < 2; i++ {
 			n, err := conn.Read(buf)
+			//log.Printf("conn.Read: %s", buf)
 			require.NoError(t, err)
 
 			if pongConn == nil {
 				pongConn, err = net.Dial("tcp", pongAddr)
 				require.NoError(t, err)
-				defer pongConn.Close()
 			}
 
 			_, err = pongConn.Write(buf[:n])
 			require.NoError(t, err)
 		}
+		pongConn.Close()
+		conn.Close()
 	}()
 }
